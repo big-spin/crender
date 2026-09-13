@@ -191,7 +191,14 @@ int X11Input(Camera *cam, Event *ev, int *width, int *height) {
                                 ev->keys.shift = keyPressed;
                                 break;
                         case XK_v:
-                                ev->keys.v = keyPressed;
+                                if (keyPressed == 0) {
+                                        break;
+                                }
+                                if (ev->wireframeMode == 0) {
+                                        ev->wireframeMode = 1;
+                                } else {
+                                        ev->wireframeMode = 0;
+                                }
                                 break;
                         case XK_Escape:
                                 if (keyPressed == 0) {

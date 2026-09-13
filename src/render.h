@@ -84,15 +84,12 @@ void ScanConversion(ClipCoords c0, ClipCoords c1, ClipCoords c2,
                                 det);
                         float lambda3 = (1 - lambda1 - lambda2);
 
-                        int drawPixel = (
-                                lambda1 >= -0.005 && lambda2 >= -0.005 && lambda3 >= -0.005) 
-                                || 
-                                (wireframeMode == 1 && (lambda1 <= 0.05 || lambda2 <= 0.05 || lambda3 <= 0.05)
-                        );
-
-                        if (!drawPixel) {
+                        if (!(lambda1 >= -0.005 && lambda2 >= -0.005 && lambda3 >= -0.005)) {
+                                continue;
+                        } else if (wireframeMode == 1 && !(lambda1 <= 0.05 || lambda2 <= 0.05 || lambda3 <= 0.05)) {
                                 continue;
                         }
+
 
                         float depth =
                                 wc0.z * lambda1 + wc1.z * lambda2 + wc2.z * lambda3;
