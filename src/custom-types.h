@@ -57,13 +57,8 @@ typedef struct {
         int s;
         int d;
 
-        int r;
-        int f;
-
-        int i;
-        int j;
-        int k;
-        int l;
+        int space;
+        int shift;
 
         int v;
 } Keyboard;
@@ -108,10 +103,9 @@ typedef struct {
 
 typedef struct {
         Vec3 pos;
-float pitch;
+        float pitch;
         float yaw;
         float speed;
-        float rotationSpeed;
 } Camera;
 
 typedef struct {

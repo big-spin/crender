@@ -157,9 +157,9 @@ NdCoords NormalizeDeviceCoordinates(ClipCoords cc) {
 // coordinates.
 WindowCoords WindowTransformation(NdCoords nc, int width, int height) {
         return (WindowCoords){
-            (nc.x + 1) / 2 * width,
-            (1.0 - (nc.y + 1) / 2) * height,
-            (nc.z + 1) / 2,
+            (float)((nc.x + 1) / 2 * width),
+            (float)((1.0 - (nc.y + 1) / 2) * height),
+            (float)((nc.z + 1) / 2),
         };
 }
 #endif

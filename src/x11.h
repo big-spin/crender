@@ -1,12 +1,15 @@
 #pragma once
 
 #include "custom-types.h"
+#include <stdint.h>
 
 void OpenX11Window();
 
 void CloseX11Window();
 
-void SetupXImage(FrameBuffer *buf, int width, int height);
+void DestroyXImage();
+
+void CreateXImage(FrameBuffer *buf, int width, int height);
 
 void ClearBuffer(FrameBuffer *buf);
 
@@ -18,13 +21,13 @@ int X11Input(Camera *cam, Event *ev, int *width, int *height);
 
 #ifdef X11_IMPL
 
+#include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/extensions/Xfixes.h>
 #include <X11/keysym.h>
+#include <X11/extensions/Xfixes.h>
+#include <X11/extensions/Xrender.h>
 
-#define KEYBOARD_IMPL
-#include "keyboard.h"
 
 #define RENDER_IMPL
 #include "render.h"
@@ -36,7 +39,7 @@ static GC gc;
 static XImage *img;
 static XEvent event;
 
-static float sens = 0.005;
+static float sens = 0.008;
 
 static int pointerCaptured = 0;
 
@@ -56,7 +59,7 @@ void OpenX11Window() {
 
         gc = XCreateGC(display, window, 0, NULL);
 
-        XSelectInput(display, window, KeyPressMask | StructureNotifyMask | PointerMotionMask);
+        XSelectInput(display, window, KeyPressMask | KeyReleaseMask | StructureNotifyMask | PointerMotionMask);
 
         XWindowChanges changes;
         changes.width = 640;
@@ -78,7 +81,14 @@ void CloseX11Window() {
         XCloseDisplay(display);
 }
 
-void SetupXImage(FrameBuffer *buf, int width, int height) {
+void DestroyXImage() {
+        if (img != NULL) {
+                XDestroyImage(img);
+                img = NULL;
+        }
+}
+
+void CreateXImage(FrameBuffer *buf, int width, int height) {
         img = XCreateImage(
                 display, DefaultVisual(display, screen),
                 DefaultDepth(display, screen), ZPixmap, 0,
@@ -87,8 +97,38 @@ void SetupXImage(FrameBuffer *buf, int width, int height) {
 }
 
 void PresentBuffer(FrameBuffer *buf) {
-        XPutImage(display, window, gc, img, 0, 0, 0, 0, buf->width, buf->height);
+        int width = buf->width;
+        int height = buf->height;
+
+        int newWidth = width * 2;
+        int newHeight = height * 2;
+
+        FrameBuffer scaledBuffer = {
+                (uint32_t*)malloc(newWidth * newHeight * sizeof(uint32_t)),
+                newWidth,
+                newHeight
+        };
+
+        for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                        scaledBuffer.data[(x * 2) + ((y * 2) * newWidth)] = buf->data[x + (y * width)];
+                        scaledBuffer.data[(x * 2 + 1) + ((y * 2) * newWidth)] = buf->data[x + (y * width)];
+
+                        scaledBuffer.data[(x * 2) + ((y * 2 + 1) * newWidth)] = buf->data[x + (y * width)];
+                        scaledBuffer.data[(x * 2 + 1) + ((y * 2 + 1) * newWidth)] = buf->data[x + (y * width)];
+                }
+        }
+
+        XImage *scaledImg = XCreateImage(
+                display, DefaultVisual(display, screen),
+                DefaultDepth(display, screen), ZPixmap, 0,
+                (char*)(scaledBuffer.data), scaledBuffer.width, scaledBuffer.height, 32, 0
+        );
+
+        XPutImage(display, window, gc, scaledImg, 0, 0, 0, 0, newWidth, newHeight);
         XFlush(display);
+
+        XDestroyImage(scaledImg);
 }
 
 void AddToBuffer(FrameBuffer *buf, int x, int y, uint32_t data) {
@@ -103,9 +143,9 @@ void ClearBuffer(FrameBuffer *buf) {
 }
 
 int X11Input(Camera *cam, Event *ev, int *width, int *height) {
-        ResetKeyboard(&ev->keys);
-
         int resized = 0;
+        int keyPressed;
+
         while (XPending(display)) {
                 XNextEvent(display, &event);
                 if (event.type == ConfigureNotify) {
@@ -121,7 +161,11 @@ int X11Input(Camera *cam, Event *ev, int *width, int *height) {
                                 cam->yaw -= dx * sens;
                                 cam->pitch -= dy * sens;
                         }
-                } else if (event.type == KeyPress) {
+                } else if (event.type == KeyPress || event.type == KeyRelease) {
+                        keyPressed = 1;
+
+                        if (event.type == KeyRelease) keyPressed = 0;
+
                         KeySym key = XLookupKeysym(&event.xkey, 0);
 
                         switch (key) {
@@ -129,39 +173,30 @@ int X11Input(Camera *cam, Event *ev, int *width, int *height) {
                                 ev->quit = 1;
                                 break;
                         case XK_w:
-                                ev->keys.w = 1;
+                                ev->keys.w = keyPressed;
                                 break;
                         case XK_a:
-                                ev->keys.a = 1;
+                                ev->keys.a = keyPressed;
                                 break;
                         case XK_s:
-                                ev->keys.s = 1;
+                                ev->keys.s = keyPressed;
                                 break;
                         case XK_d:
-                                ev->keys.d = 1;
+                                ev->keys.d = keyPressed;
                                 break;
-                        case XK_r:
-                                ev->keys.r = 1;
+                        case XK_space:
+                                ev->keys.space = keyPressed;
                                 break;
-                        case XK_f:
-                                ev->keys.f = 1;
-                                break;
-                        case XK_i:
-                                ev->keys.i = 1;
-                                break;
-                        case XK_k:
-                                ev->keys.k = 1;
-                                break;
-                        case XK_j:
-                                ev->keys.j = 1;
-                                break;
-                        case XK_l:
-                                ev->keys.l = 1;
+                        case XK_Shift_L:
+                                ev->keys.shift = keyPressed;
                                 break;
                         case XK_v:
-                                ev->keys.v = 1;
+                                ev->keys.v = keyPressed;
                                 break;
                         case XK_Escape:
+                                if (keyPressed == 0) {
+                                        break;
+                                }
                                 if (pointerCaptured == 0) {
                                         XGrabPointer(
                                                 display, window, 1,

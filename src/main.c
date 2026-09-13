@@ -1,3 +1,5 @@
+#include "custom-types.h"
+#include <stdlib.h>
 #define SCENE_LOADER_IMPL
 #include "scene-loader.h"
 
@@ -21,26 +23,24 @@ int main(int argc, char *argv[]) {
 
         FrameBuffer buffer = {
             malloc(width * height * sizeof(uint32_t)),
-            width,
-            height,
+            (int)(width / 2),
+            (int)(height / 2),
         };
 
-        float *depthBuffer = malloc(width * height * sizeof(float));
+        float *depthBuffer = malloc((int)(width / 2) * (int)(height / 2) * sizeof(float));
 
-        SetupXImage(&buffer, 640, 480);
+        CreateXImage(&buffer, (int)(width / 2), (int)(height / 2));
 
         Object *scene = NULL;
 
         int sceneSize = LoadSceneFromFile(argv[1], &scene, NULL, 0);
-        if (sceneSize == 0)
-                return 1;
+        if (sceneSize == 0) return 1;
 
         Camera cam = {
             .pos = {0.0, 0.0, 0.0},
             .pitch = 0.0,
             .yaw = 0.0,
-            .speed = 20.0,
-            .rotationSpeed = 250.0,
+            .speed = 1.0,
         };
 
         Event ev;
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 
         while (ev.quit != 1) {
                 ClearBuffer(&buffer);
-                ClearDepthBuffer(depthBuffer, width, height);
+                ClearDepthBuffer(depthBuffer, (int)(width / 2), (int)(height / 2));
 
                 for (int i = 0; i < sceneSize; i++) {
                         if (scene[i].hasFunction == 1) {
@@ -65,28 +65,23 @@ int main(int argc, char *argv[]) {
                         for (int j = 0; j < scene[i].triangleCount; j++) {
                                 RenderTriangle(&scene[i].mesh[j], &scene[i],
                                                &cam, depthBuffer, &buffer,
-                                               ev.wireframeMode, width, height);
+                                               ev.wireframeMode, (int)(width / 2), (int)(height / 2));
                         }
                 }
 
-                int inputResult = 0;
-
                 PresentBuffer(&buffer);
-                inputResult = X11Input(&cam, &ev, &width, &height);
+                int didWindowResize = X11Input(&cam, &ev, &width, &height);
 
-                if (inputResult == -1)
-                        return 1;
+                if (didWindowResize == 1) {
+                        depthBuffer = realloc(depthBuffer, (int)(width / 2) * (int)(height / 2) * sizeof(float));
 
-                if (inputResult == 1) {
-                        depthBuffer = realloc(depthBuffer,
-                                              width * height * sizeof(float));
+                        DestroyXImage();
 
-                        buffer.data = realloc(
-                            buffer.data, width * height * sizeof(uint32_t));
-                        buffer.width = width;
-                        buffer.height = height;
+                        buffer.data = malloc((int)(width / 2) * (int)(height / 2) * sizeof(uint32_t));
+                        buffer.width = (int)(width / 2);
+                        buffer.height = (int)(height / 2);
 
-                        SetupXImage(&buffer, width, height);
+                        CreateXImage(&buffer, (int)(width / 2), (int)(height / 2));
                 }
 
                 Vec3 forward = RotateVec3AroundAxis(
@@ -107,19 +102,10 @@ int main(int argc, char *argv[]) {
                 if (ev.keys.d == 1)
                         cam.pos = AddVec3(cam.pos, right);
 
-                if (ev.keys.r == 1)
+                if (ev.keys.space == 1)
                         cam.pos.y += cam.speed * deltaTime;
-                if (ev.keys.f == 1)
+                if (ev.keys.shift == 1)
                         cam.pos.y -= cam.speed * deltaTime;
-
-                if (ev.keys.i == 1)
-                        cam.pitch += cam.rotationSpeed * deltaTime;
-                if (ev.keys.j == 1)
-                        cam.yaw += cam.rotationSpeed * deltaTime;
-                if (ev.keys.k == 1)
-                        cam.pitch -= cam.rotationSpeed * deltaTime;
-                if (ev.keys.l == 1)
-                        cam.yaw -= cam.rotationSpeed * deltaTime;
 
                 if (ev.keys.v == 1)
                         ev.wireframeMode = (ev.wireframeMode == 0 ? 1 : 0);
