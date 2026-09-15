@@ -1,29 +1,11 @@
-LOAD data/CrtMonitor.obj
+LOAD data/car01/car.obj
+MOVE 0 -6/-1/-6
+TEXTURE 0 data/car01/car.ppm
 
-MOVE 0 0/0.01/-8.5
-ROTATE 0 -90/-90/0
-SCALE 0 0.03/0.03/0.03
+LOAD data/car01/car.obj
+MOVE 1 0/-1/-6
+TEXTURE 1 data/car01/car_snow.ppm
 
-LOAD data/desk.obj
-
-MOVE 1 0/-2.25/-8
-ROTATE 1 -90/-90/0
-SCALE 1 0.03/0.03/0.03
-
-LOAD data/computer.obj
-
-MOVE 2 -1.5/0/-8.1
-ROTATE 2 -90/-90/0
-SCALE 2 0.03/0.03/0.03
-
-LOAD data/keyboard.obj
-
-MOVE 3 0/0/-7.5
-ROTATE 3 -90/-90/0
-SCALE 3 0.03/0.03/0.03
-
-LOAD data/mouse.obj
-
-MOVE 4 1.5/0.05/-7.8
-ROTATE 4 0/15/-90
-SCALE 4 0.03/0.03/0.03
+LOAD data/car01/car.obj
+MOVE 2 6/-1/-6
+TEXTURE 2 data/car01/car_snowcovered.ppm

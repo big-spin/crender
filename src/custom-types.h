@@ -38,7 +38,8 @@ typedef struct {
         float y;
         float z;
         float w;
-        Vec3 nor;    
+        Vec3 nor;
+        Vec2 uv;
 } ClipCoords;
 
 typedef struct {
@@ -59,6 +60,7 @@ typedef struct {
 
         int space;
         int shift;
+        int ctrl;
 
         int v;
 } Keyboard;

@@ -255,6 +255,9 @@ ClipCoords Lerp(ClipCoords p0, ClipCoords p1, float t) {
         out.nor.y = p0.nor.y + (p1.nor.y - p0.nor.y) * t;
         out.nor.z = p0.nor.z + (p1.nor.z - p0.nor.z) * t;
 
+        out.uv.x = p0.uv.x + (p1.uv.x - p0.uv.x) * t;
+        out.uv.x = p0.uv.y + (p1.uv.y - p0.uv.y) * t;
+
         return out;
 }
 

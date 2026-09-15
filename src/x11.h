@@ -12,8 +12,6 @@ void CreateXImage(FrameBuffer *buf, int width, int height);
 
 void ClearBuffer(FrameBuffer *buf);
 
-void AddToBuffer(FrameBuffer *buf, int x, int y, uint32_t data);
-
 void PresentBuffer(FrameBuffer *buf);
 
 int X11Input(Camera *cam, Event *ev, int *width, int *height);
@@ -130,10 +128,6 @@ void PresentBuffer(FrameBuffer *buf) {
         XDestroyImage(scaledImg);
 }
 
-void AddToBuffer(FrameBuffer *buf, int x, int y, uint32_t data) {
-        buf->data[x + (y * buf->width)] = data;
-}
-
 void ClearBuffer(FrameBuffer *buf) {
         memset(
                 buf->data, 0x00000000,
@@ -188,6 +182,9 @@ int X11Input(Camera *cam, Event *ev, int *width, int *height) {
                                 break;
                         case XK_Shift_L:
                                 ev->keys.shift = keyPressed;
+                                break;
+                        case XK_Control_L:
+                                ev->keys.ctrl = keyPressed;
                                 break;
                         case XK_v:
                                 if (keyPressed == 0) break;

@@ -2,7 +2,7 @@
 
 int LoadTexture(const char *path, Texture *tex);
 
-//#ifdef TEX_LOADER_IMPL
+#ifdef TEX_LOADER_IMPL
 
 void AddPixelToTexture(uint8_t pixel[3], Texture *tex, int pixelIdx) {
         uint32_t pixel32 = (
@@ -80,4 +80,4 @@ int LoadTexture(const char *path, Texture *tex) {
         return 0;
 }
 
-//#endif
+#endif

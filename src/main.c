@@ -9,18 +9,18 @@
 #include "render.h"
 #include "math-utils.h"
 
-#include "texture-loader.h"
-
 
 int width = 640;
 int height = 480;
 
 int main(int argc, char *argv[]) {
+        /*
         Texture tex;
 
         LoadTexture("data/textures/red.ppm", &tex);
 
         return 0;
+        */
 
         if (argc < 2) {
                 puts("No scene file provided\n");
@@ -123,6 +123,11 @@ int main(int argc, char *argv[]) {
                         cam.pos.y += cam.speed * deltaTime;
                 if (ev.keys.shift == 1)
                         cam.pos.y -= cam.speed * deltaTime;
+                
+                if (ev.keys.ctrl == 1)
+                        cam.speed = 2.0;
+                if (ev.keys.ctrl == 0)
+                        cam.speed = 1.0;
 
                 struct timespec now;
                 clock_gettime(CLOCK_MONOTONIC, &now);
@@ -142,6 +147,8 @@ int main(int argc, char *argv[]) {
 
         for (int i = 0; i < sceneSize; i++) {
                 free(scene[i].mesh);
+                if (scene[i].hasTexture)
+                        free(scene[i].tex.data);
         }
         free(scene);
 

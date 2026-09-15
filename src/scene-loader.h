@@ -10,6 +10,9 @@ int LoadSceneFromFile(char *path, Object **scene, NameFunctionPair *funcs,
 #define OBJ_LOADER_IMPL
 #include "obj-loader.h"
 
+#define TEX_LOADER_IMPL
+#include "texture-loader.h"
+
 int LoadSceneFromFile(char *path, Object **scene, NameFunctionPair *funcs,
                       int funcCount) {
         FILE *ptr = fopen(path, "r");
@@ -43,10 +46,10 @@ int LoadSceneFromFile(char *path, Object **scene, NameFunctionPair *funcs,
                                 return 0;
                         }
 
-                        (*scene) = realloc((*scene), (n + 1) * sizeof(Object));
+                        (*scene) = (Object*)(realloc((*scene), (n + 1) * sizeof(Object)));
                         (*scene)[n].hasFunction = 0;
 
-                        (*scene)[n].mesh = malloc(1000 * sizeof(Triangle));
+                        (*scene)[n].mesh = (Triangle*)(malloc(1000 * sizeof(Triangle)));
 
                         int triCount =
                             LoadMeshFromFile(fileToLoad, (*scene)[n].mesh);
@@ -56,6 +59,8 @@ int LoadSceneFromFile(char *path, Object **scene, NameFunctionPair *funcs,
                         (*scene)[n].triangleCount = triCount;
 
                         (*scene)[n].scale = (Vec3){1, 1, 1};
+                        (*scene)[n].position = (Vec3){0, 0, 0};
+                        (*scene)[n].rotation = (Vec3){0, 0, 0};
 
                         n++;
                 } else if (strcmp(split, "MOVE") == 0) {
@@ -154,6 +159,24 @@ int LoadSceneFromFile(char *path, Object **scene, NameFunctionPair *funcs,
                                     name, path, line);
                                 return 0;
                         }
+                } else if (strcmp(split, "TEXTURE") == 0) {
+                        int idx;
+                        char texturePath[256];
+
+                        int out = sscanf(data, "TEXTURE %d %s", &idx, texturePath);
+                        if (out != 2) {
+                                printf("Error assigning texture to object: "
+                                       "(invalid command at '%s:%d')\n",
+                                       path, line);
+                                return 0; 
+                        }
+
+                        int err = LoadTexture(texturePath, &(*scene)[idx].tex);
+                        if (err != 0) {
+                                return 0;
+                        }
+                        
+                        (*scene)[idx].hasTexture = 1;
                 }
         }
 

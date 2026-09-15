@@ -1,3 +1,9 @@
+# 'perf' data
+perf.*
+
+# Binary output
+crender
+
 # Prerequisites
 *.d
 

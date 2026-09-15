@@ -6,7 +6,7 @@ void UpdatePerspectiveMatrix(int width, int height);
 
 void ScanConversion(ClipCoords c0, ClipCoords c1, ClipCoords c2,
                     float *depthBuffer, FrameBuffer *buf, int wireframeMode,
-                    int width, int height);
+                    int width, int height, int hasTexture, Texture tex);
 
 void ClearDepthBuffer(float *buffer, int width, int height);
 
@@ -16,13 +16,13 @@ void RenderTriangle(Triangle *triangle, Object *obj, Camera *cam,
 
 #ifdef RENDER_IMPL
 
+#define X11_IMPL
+#include "x11.h"
+
 #define TRANSFORMATIONS_IMPL
 #include "transformations.h"
 
 #include "math-utils.h"
-
-#define X11_IMPL
-#include "x11.h"
 
 #define Z_NEAR 0.1f
 #define Z_FAR 10.0f
@@ -55,7 +55,7 @@ void UpdatePerspectiveMatrix(int width, int height) {
 
 void ScanConversion(ClipCoords c0, ClipCoords c1, ClipCoords c2,
                     float *depthBuffer, FrameBuffer *buf, int wireframeMode,
-                    int width, int height) {
+                    int width, int height, int hasTexture, Texture tex) {
         WindowCoords wc0 =
             WindowTransformation(NormalizeDeviceCoordinates(c0), width, height);
         WindowCoords wc1 =
@@ -68,6 +68,8 @@ void ScanConversion(ClipCoords c0, ClipCoords c1, ClipCoords c2,
 
         float det = ((wc1.y - wc2.y) * (wc0.x - wc2.x) +
                      (wc2.x - wc1.x) * (wc0.y - wc2.y));
+        
+        float invDet = 1 / det;
 
         float value1 = wc1.y - wc2.y;
         float value2 = wc2.x - wc1.x;
@@ -76,12 +78,8 @@ void ScanConversion(ClipCoords c0, ClipCoords c1, ClipCoords c2,
 
         for (int x = box.x1; x < box.x2; x++) {
                 for (int y = box.y1; y < box.y2; y++) {
-                        float lambda1 =
-                                ((value1 * (x - wc2.x) + value2 * (y - wc2.y)) /
-                                det);
-                        float lambda2 =
-                                ((value3 * (x - wc2.x) + value4 * (y - wc2.y)) /
-                                det);
+                        float lambda1 = ((value1 * (x - wc2.x) + value2 * (y - wc2.y)) * invDet);
+                        float lambda2 = ((value3 * (x - wc2.x) + value4 * (y - wc2.y)) * invDet);
                         float lambda3 = (1 - lambda1 - lambda2);
 
                         if (!(lambda1 >= -0.005 && lambda2 >= -0.005 && lambda3 >= -0.005)) {
@@ -89,7 +87,6 @@ void ScanConversion(ClipCoords c0, ClipCoords c1, ClipCoords c2,
                         } else if (wireframeMode == 1 && !(lambda1 <= 0.05 || lambda2 <= 0.05 || lambda3 <= 0.05)) {
                                 continue;
                         }
-
 
                         float depth = wc0.z * lambda1 + wc1.z * lambda2 + wc2.z * lambda3;
 
@@ -107,14 +104,39 @@ void ScanConversion(ClipCoords c0, ClipCoords c1, ClipCoords c2,
                         };
                         Normalize(&normal);
 
-                        float lightValue =
-                                0.4 +
-                                0.6 *
-                                (DotProduct(normal, lightDirection) / 2 + 0.5);
-                        uint32_t light = (uint32_t)(lightValue * 255);
-                        uint32_t pixel = (light << 16) | (light << 8) | light;
+                        float light = 0.4 + 0.6 * (DotProduct(normal, lightDirection) / 2 + 0.5);
 
-                        AddToBuffer(buf, x, y, pixel);
+                        uint32_t pixel;
+
+                        if (hasTexture == 1) {
+                                float u = (
+                                        c0.uv.x * lambda1 +
+                                        c1.uv.x * lambda2 +
+                                        c2.uv.x * lambda3
+                                );
+                                float v = (
+                                        c0.uv.y * lambda1 +
+                                        c1.uv.y * lambda2 +
+                                        c2.uv.y * lambda3
+                                );
+
+                                int textureX = clamp((int)(u * tex.width), tex.width - 1, 0);
+                                int textureY = clamp((int)((1.0 - v) * tex.height), tex.height - 1, 0);
+
+                                uint8_t *colors = (uint8_t*)&tex.data[textureX + (textureY * tex.width)];
+
+                                uint8_t r = colors[2] * light;
+                                uint8_t g = colors[1] * light;
+                                uint8_t b = colors[0] * light;
+
+                                pixel = (r << 16) | (g << 8) | (b << 0);
+                        } else {
+                                uint8_t lightValue = (int)((light)* 255);
+
+                                pixel = (lightValue << 16) | (lightValue << 8) | (lightValue << 0);
+                        }
+
+                        buf->data[x + (y * buf->width)] = pixel;
 
                         depthBuffer[x + (y * width)] = depth;
                 }
@@ -149,6 +171,11 @@ void RenderTriangle(Triangle *triangle, Object *obj, Camera *cam,
         cc[2].nor = RotateVec3(triangle->vertices[2].nor, obj->rotation.x,
                                obj->rotation.y, obj->rotation.z);
 
+        cc[0].uv = triangle->vertices[0].uv;
+        cc[1].uv = triangle->vertices[1].uv;
+        cc[2].uv = triangle->vertices[2].uv;
+
+
         int clip0 = 0, clip1 = 0, clip2 = 0;
         if (cc[0].w <= Z_NEAR)
                 clip0 = 1;
@@ -166,10 +193,14 @@ void RenderTriangle(Triangle *triangle, Object *obj, Camera *cam,
         ClipCoords clipPointEdgeA;
         ClipCoords clipPointEdgeB;
 
+        Texture texture = obj->hasTexture == 1 ? 
+                obj->tex : (Texture){0, 0, 0, NULL};
+
         switch (clipCount) {
         case 0:
                 ScanConversion(cc[0], cc[1], cc[2], depthBuffer, buffer,
-                               wireframeMode, width, height);
+                               wireframeMode, width, height, obj->hasTexture,
+                               texture);
                 break;
         case 1:
                 idxClip = (clip0 == 1) ? 0 : (clip1 == 1) ? 1 : 2;
@@ -186,10 +217,10 @@ void RenderTriangle(Triangle *triangle, Object *obj, Camera *cam,
 
                 ScanConversion(clipPointEdgeB, clipPointEdgeA, cc[idxPrev],
                                depthBuffer, buffer, wireframeMode, width,
-                               height);
+                               height, obj->hasTexture, texture);
                 ScanConversion(clipPointEdgeA, cc[idxNext], cc[idxPrev],
                                depthBuffer, buffer, wireframeMode, width,
-                               height);
+                               height, obj->hasTexture, texture);
                 break;
         case 2:
                 idxNonClip = (clip0 == 0) ? 0 : (clip1 == 0) ? 1 : 2;
@@ -206,7 +237,7 @@ void RenderTriangle(Triangle *triangle, Object *obj, Camera *cam,
 
                 ScanConversion(clipPointEdgeB, cc[idxNonClip], clipPointEdgeA,
                                depthBuffer, buffer, wireframeMode, width,
-                               height);
+                               height, obj->hasTexture, texture);
                 break;
         case 3:
                 return;
