@@ -66,13 +66,17 @@ typedef struct {
 typedef struct {
         int quit;
         int wireframeMode;
-        int frameNumber;
         Keyboard keys;
 } Event;
 
 typedef struct Object Object;
 
 typedef void (*ObjectFunction)(Object*, Event*);
+
+typedef struct {
+        int width; int height; int numOfColors;
+        uint32_t *data;
+} Texture;
 
 struct Object {
         Vec3 position;
@@ -82,6 +86,8 @@ struct Object {
         int triangleCount;
         ObjectFunction func;
         int hasFunction;
+        Texture tex;
+        int hasTexture;
 };
 
 typedef struct {

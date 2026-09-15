@@ -18,7 +18,7 @@ int LoadMeshFromFile(char *path, Triangle *mesh) {
                 return 0;
         }
 
-        char data[100];
+        char data[1024];
 
         int vertexCount = 0;
         int normalCount = 0;

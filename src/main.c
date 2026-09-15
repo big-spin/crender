@@ -1,5 +1,5 @@
 #include "custom-types.h"
-#include <stdlib.h>
+
 #define SCENE_LOADER_IMPL
 #include "scene-loader.h"
 
@@ -9,11 +9,19 @@
 #include "render.h"
 #include "math-utils.h"
 
+#include "texture-loader.h"
+
 
 int width = 640;
 int height = 480;
 
 int main(int argc, char *argv[]) {
+        Texture tex;
+
+        LoadTexture("data/textures/red.ppm", &tex);
+
+        return 0;
+
         if (argc < 2) {
                 puts("No scene file provided\n");
                 return 0;
@@ -22,9 +30,9 @@ int main(int argc, char *argv[]) {
         OpenX11Window();
 
         FrameBuffer buffer = {
-            malloc(width * height * sizeof(uint32_t)),
-            (int)(width / 2),
-            (int)(height / 2),
+            .data=malloc(width * height * sizeof(uint32_t)),
+            .width=(int)(width / 2),
+            .height=(int)(height / 2),
         };
 
         float *depthBuffer = malloc((int)(width / 2) * (int)(height / 2) * sizeof(float));
@@ -63,21 +71,30 @@ int main(int argc, char *argv[]) {
                         }
 
                         for (int j = 0; j < scene[i].triangleCount; j++) {
-                                RenderTriangle(&scene[i].mesh[j], &scene[i],
-                                               &cam, depthBuffer, &buffer,
-                                               ev.wireframeMode, (int)(width / 2), (int)(height / 2));
+                                RenderTriangle(
+                                        &scene[i].mesh[j], &scene[i],
+                                        &cam, depthBuffer, &buffer,
+                                        ev.wireframeMode, 
+                                        (int)(width / 2), (int)(height / 2)
+                                );
                         }
                 }
 
                 PresentBuffer(&buffer);
+
                 int didWindowResize = X11Input(&cam, &ev, &width, &height);
 
                 if (didWindowResize == 1) {
-                        depthBuffer = realloc(depthBuffer, (int)(width / 2) * (int)(height / 2) * sizeof(float));
+                        depthBuffer = realloc(
+                                depthBuffer,
+                                (int)(width / 2) * (int)(height / 2) * sizeof(float)
+                        );
 
                         DestroyXImage();
 
-                        buffer.data = malloc((int)(width / 2) * (int)(height / 2) * sizeof(uint32_t));
+                        buffer.data = malloc(
+                                (int)(width / 2) * (int)(height / 2) * sizeof(uint32_t)
+                        );
                         buffer.width = (int)(width / 2);
                         buffer.height = (int)(height / 2);
 
@@ -107,11 +124,6 @@ int main(int argc, char *argv[]) {
                 if (ev.keys.shift == 1)
                         cam.pos.y -= cam.speed * deltaTime;
 
-                if (ev.keys.v == 1)
-                        ev.wireframeMode = (ev.wireframeMode == 0 ? 1 : 0);
-
-                ev.frameNumber++;
-
                 struct timespec now;
                 clock_gettime(CLOCK_MONOTONIC, &now);
 
@@ -121,8 +133,7 @@ int main(int argc, char *argv[]) {
 
                 deltaTimeClock = now;
 
-                printf("Frame %d: (%ffps, %fms)\n", ev.frameNumber,
-                       (1 / deltaTime), deltaTime * 1000);
+                printf("%ffps, %fms\n", (1 / deltaTime), deltaTime * 1000);
         }
 
         CloseX11Window();

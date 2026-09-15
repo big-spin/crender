@@ -1,7 +1,6 @@
 #pragma once
 
 #include "custom-types.h"
-#include <stdint.h>
 
 void OpenX11Window();
 
@@ -191,19 +190,18 @@ int X11Input(Camera *cam, Event *ev, int *width, int *height) {
                                 ev->keys.shift = keyPressed;
                                 break;
                         case XK_v:
-                                if (keyPressed == 0) {
-                                        break;
-                                }
+                                if (keyPressed == 0) break;
+                                
                                 if (ev->wireframeMode == 0) {
                                         ev->wireframeMode = 1;
                                 } else {
                                         ev->wireframeMode = 0;
                                 }
+
                                 break;
                         case XK_Escape:
-                                if (keyPressed == 0) {
-                                        break;
-                                }
+                                if (keyPressed == 0) break;
+                                
                                 if (pointerCaptured == 0) {
                                         XGrabPointer(
                                                 display, window, 1,
@@ -225,8 +223,7 @@ int X11Input(Camera *cam, Event *ev, int *width, int *height) {
         }
 
         if (pointerCaptured == 1)
-                XWarpPointer(display, None, window, 0, 0, 0, 0, *width / 2,
-                             *height / 2);
+                XWarpPointer(display, None, window, 0, 0, 0, 0, *width / 2, *height / 2);
         if (resized == 1)
                 UpdatePerspectiveMatrix(*width, *height);
 

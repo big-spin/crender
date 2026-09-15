@@ -1,6 +1,6 @@
 LOAD data/CrtMonitor.obj
 
-MOVE 0 0/0/-8.5
+MOVE 0 0/0.01/-8.5
 ROTATE 0 -90/-90/0
 SCALE 0 0.03/0.03/0.03
 
@@ -24,10 +24,6 @@ SCALE 3 0.03/0.03/0.03
 
 LOAD data/mouse.obj
 
-MOVE 4 1.5/0/-7.8
+MOVE 4 1.5/0.05/-7.8
 ROTATE 4 0/15/-90
 SCALE 4 0.03/0.03/0.03
-
-LOAD data/speaker.obj
-
-SCALE 5 0.03/0.03/0.03

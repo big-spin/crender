@@ -24,7 +24,7 @@ void RenderTriangle(Triangle *triangle, Object *obj, Camera *cam,
 #define X11_IMPL
 #include "x11.h"
 
-#define Z_NEAR 0.5f
+#define Z_NEAR 0.1f
 #define Z_FAR 10.0f
 
 static float perspectiveMatrix[4][4];
@@ -91,8 +91,7 @@ void ScanConversion(ClipCoords c0, ClipCoords c1, ClipCoords c2,
                         }
 
 
-                        float depth =
-                                wc0.z * lambda1 + wc1.z * lambda2 + wc2.z * lambda3;
+                        float depth = wc0.z * lambda1 + wc1.z * lambda2 + wc2.z * lambda3;
 
                         if (depth > depthBuffer[x + (y)*width])
                                 continue;
