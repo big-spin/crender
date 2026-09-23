@@ -9,7 +9,6 @@
 #include "render.h"
 #include "math-utils.h"
 
-
 int width = 640;
 int height = 480;
 
@@ -31,13 +30,13 @@ int main(int argc, char *argv[]) {
 
         FrameBuffer buffer = {
             .data=malloc(width * height * sizeof(uint32_t)),
-            .width=(int)(width / 2),
-            .height=(int)(height / 2),
+            .width=(int)(width / RENDER_SCALE),
+            .height=(int)(height / RENDER_SCALE),
         };
 
-        float *depthBuffer = malloc((int)(width / 2) * (int)(height / 2) * sizeof(float));
+        float *depthBuffer = malloc((int)(width / RENDER_SCALE) * (int)(height / RENDER_SCALE) * sizeof(float));
 
-        CreateXImage(&buffer, (int)(width / 2), (int)(height / 2));
+        CreateXImage(&buffer, (int)(width / RENDER_SCALE), (int)(height / RENDER_SCALE));
 
         Object *scene = NULL;
 
@@ -63,11 +62,11 @@ int main(int argc, char *argv[]) {
 
         while (ev.quit != 1) {
                 ClearBuffer(&buffer);
-                ClearDepthBuffer(depthBuffer, (int)(width / 2), (int)(height / 2));
+                ClearDepthBuffer(depthBuffer, (int)(width / RENDER_SCALE), (int)(height / RENDER_SCALE));
 
                 for (int i = 0; i < sceneSize; i++) {
                         if (scene[i].hasFunction == 1) {
-                                scene[i].func(&scene[i], &ev);
+                                scene[i].func(&scene[i], &ev, &cam);
                         }
 
                         for (int j = 0; j < scene[i].triangleCount; j++) {
@@ -75,7 +74,7 @@ int main(int argc, char *argv[]) {
                                         &scene[i].mesh[j], &scene[i],
                                         &cam, depthBuffer, &buffer,
                                         ev.wireframeMode, 
-                                        (int)(width / 2), (int)(height / 2)
+                                        (int)(width / RENDER_SCALE), (int)(height / RENDER_SCALE)
                                 );
                         }
                 }
@@ -83,22 +82,21 @@ int main(int argc, char *argv[]) {
                 PresentBuffer(&buffer);
 
                 int didWindowResize = X11Input(&cam, &ev, &width, &height);
-
                 if (didWindowResize == 1) {
                         depthBuffer = realloc(
                                 depthBuffer,
-                                (int)(width / 2) * (int)(height / 2) * sizeof(float)
+                                (int)(width / RENDER_SCALE) * (int)(height / RENDER_SCALE) * sizeof(float)
                         );
 
                         DestroyXImage();
 
                         buffer.data = malloc(
-                                (int)(width / 2) * (int)(height / 2) * sizeof(uint32_t)
+                                (int)(width / RENDER_SCALE) * (int)(height / RENDER_SCALE) * sizeof(uint32_t)
                         );
-                        buffer.width = (int)(width / 2);
-                        buffer.height = (int)(height / 2);
+                        buffer.width = (int)(width / RENDER_SCALE);
+                        buffer.height = (int)(height / RENDER_SCALE);
 
-                        CreateXImage(&buffer, (int)(width / 2), (int)(height / 2));
+                        CreateXImage(&buffer, (int)(width / RENDER_SCALE), (int)(height / RENDER_SCALE));
                 }
 
                 Vec3 forward = RotateVec3AroundAxis(

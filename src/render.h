@@ -125,9 +125,9 @@ void ScanConversion(ClipCoords c0, ClipCoords c1, ClipCoords c2,
 
                                 uint8_t *colors = (uint8_t*)&tex.data[textureX + (textureY * tex.width)];
 
-                                uint8_t r = colors[2] * light;
-                                uint8_t g = colors[1] * light;
-                                uint8_t b = colors[0] * light;
+                                uint8_t r = round(colors[2] * light / 8) * 8;
+                                uint8_t g = round(colors[1] * light / 8) * 8;
+                                uint8_t b = round(colors[0] * light / 8) * 8;
 
                                 pixel = (r << 16) | (g << 8) | (b << 0);
                         } else {
@@ -243,5 +243,4 @@ void RenderTriangle(Triangle *triangle, Object *obj, Camera *cam,
                 return;
         }
 }
-
 #endif

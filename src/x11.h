@@ -16,6 +16,8 @@ void PresentBuffer(FrameBuffer *buf);
 
 int X11Input(Camera *cam, Event *ev, int *width, int *height);
 
+#define RENDER_SCALE 4
+
 #ifdef X11_IMPL
 
 #include <X11/X.h>
@@ -23,8 +25,6 @@ int X11Input(Camera *cam, Event *ev, int *width, int *height);
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 #include <X11/extensions/Xfixes.h>
-#include <X11/extensions/Xrender.h>
-
 
 #define RENDER_IMPL
 #include "render.h"
@@ -97,8 +97,8 @@ void PresentBuffer(FrameBuffer *buf) {
         int width = buf->width;
         int height = buf->height;
 
-        int newWidth = width * 2;
-        int newHeight = height * 2;
+        int newWidth = width * RENDER_SCALE;
+        int newHeight = height * RENDER_SCALE;
 
         FrameBuffer scaledBuffer = {
                 (uint32_t*)malloc(newWidth * newHeight * sizeof(uint32_t)),
@@ -108,11 +108,18 @@ void PresentBuffer(FrameBuffer *buf) {
 
         for (int x = 0; x < width; x++) {
                 for (int y = 0; y < height; y++) {
+                        /*
                         scaledBuffer.data[(x * 2) + ((y * 2) * newWidth)] = buf->data[x + (y * width)];
                         scaledBuffer.data[(x * 2 + 1) + ((y * 2) * newWidth)] = buf->data[x + (y * width)];
 
                         scaledBuffer.data[(x * 2) + ((y * 2 + 1) * newWidth)] = buf->data[x + (y * width)];
                         scaledBuffer.data[(x * 2 + 1) + ((y * 2 + 1) * newWidth)] = buf->data[x + (y * width)];
+                        */
+                        for (int i = 0; i < RENDER_SCALE; i++) {
+                                for (int j = 0; j < RENDER_SCALE; j++) {
+                                        scaledBuffer.data[(x * RENDER_SCALE + i) + ((y * RENDER_SCALE + j) * newWidth)] = buf->data[x + (y * width)];
+                                }
+                        }
                 }
         }
 

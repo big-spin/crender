@@ -71,9 +71,16 @@ typedef struct {
         Keyboard keys;
 } Event;
 
+typedef struct {
+        Vec3 pos;
+        float pitch;
+        float yaw;
+        float speed;
+} Camera;
+
 typedef struct Object Object;
 
-typedef void (*ObjectFunction)(Object*, Event*);
+typedef void (*ObjectFunction)(Object*, Event*, Camera*);
 
 typedef struct {
         int width; int height; int numOfColors;
@@ -108,13 +115,6 @@ typedef struct {
         int width;
         int height;
 } FrameBuffer;
-
-typedef struct {
-        Vec3 pos;
-        float pitch;
-        float yaw;
-        float speed;
-} Camera;
 
 typedef struct {
         float data[3][3];

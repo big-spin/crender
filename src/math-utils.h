@@ -261,6 +261,10 @@ ClipCoords Lerp(ClipCoords p0, ClipCoords p1, float t) {
         return out;
 }
 
+float Lerpf(float a, float b, float t) {
+        return (a + (b - a) * t);
+}
+
 int max(int a, int b, int c) {
         int _max = a > b ? a : b;
 
@@ -274,11 +278,14 @@ int min(int a, int b, int c) {
 }
 
 int clamp(int n, int max, int min) {
-        if (n < min)
-                return min;
-        if (n > max)
-                return max;
+        if (n < min) return min;
+        if (n > max) return max;
+        return n;
+}
 
+float clampf(float n, float max, float min) {
+        if (n < min) return min;
+        if (n > max) return max;
         return n;
 }
 
