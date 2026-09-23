@@ -13,14 +13,6 @@ int width = 640;
 int height = 480;
 
 int main(int argc, char *argv[]) {
-        /*
-        Texture tex;
-
-        LoadTexture("data/textures/red.ppm", &tex);
-
-        return 0;
-        */
-
         if (argc < 2) {
                 puts("No scene file provided\n");
                 return 0;
