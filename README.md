@@ -1,5 +1,8 @@
 # crender
 
+Heavily based on a previous project of mine ([tui-software-renderer](https://github.com/big-spin/tui-software-renderer))
+but adapted for rendering to an x11 window instead of the terminal featuring texture loading and render scaling.
+
 A simple software renderer written in C with a minimal set of dependecies.
 
 It can render most OBJ (wavefront) models as well as their respective textures (only in .ppm format for now)
